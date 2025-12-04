@@ -12,7 +12,8 @@ from .config import (
     REPORT_FILE,
 )
 from app.loader.log_loader import LogLoader
-from app.workers import worker_process
+from app.workers.worker_process import WorkerProcess
+
 
 
 def setup_logging() -> None:
@@ -56,7 +57,7 @@ def main() -> None:
     loader.start()
     loader.join()
 
-    worker1 = worker_process(task_queue, result_queue, worker_id=1)
+    worker1 = WorkerProcess(task_queue, result_queue, worker_id=1)
     worker1.start()
     worker1.join()
 
