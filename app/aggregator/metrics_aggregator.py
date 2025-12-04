@@ -9,10 +9,11 @@ class MetricsAggregator(Process):
     """
 
     ## constructor
-    def __init__(self, result_queue: Queue, worker_count: int):
+    def __init__(self, result_queue: Queue, worker_count: int, shared_dict=None):
         super().__init__(name="MetricsAggregator")
         self.result_queue = result_queue
         self.worker_count = worker_count
+        self.shared_dict = shared_dict
         self.total_requests = 0
         self.status_counts = {}
         self.ip_counts = {}
@@ -31,19 +32,14 @@ class MetricsAggregator(Process):
         self._merge_dict(self.status_counts, m["status_counts"])
         self._merge_dict(self.ip_counts, m["ip_counts"])
         self._merge_dict(self.url_counts, m["url_counts"])
+        
 
     # defined own function
     def get_final_metrics(self):
-        return {
-            "total_requests": self.total_requests,
-            "status_counts": self.status_counts,
-            "ip_counts": self.ip_counts,
-            "url_counts": self.url_counts,
-        }
+        return self.shared_dict
     
     # inbuilt function of python process-class and override into this class
     def run(self):
-        print("📊 Aggregator started.")
         logging.info("📊 Aggregator started.")
         stop_signals_received = 0
         # infinite loop until result-queue is not become empty OR all worker task is done and stopped immediately
@@ -61,11 +57,14 @@ class MetricsAggregator(Process):
                 continue
             # Normal metrics merge
             self.merge_metrics(event)
-        logging.info("📈 Aggregator finished merging metrics.")
-        logging.info(
-            f"📌 Total Requests: {self.total_requests}, "
-            f"Unique IPs: {len(self.ip_counts)}, "
-            f"Unique URLs: {len(self.url_counts)}"
-        )
+        logging.info("📈 Aggregator merging finished. Saving to shared dict...")
+
+        # Store final result into Manager.shared_dict
+        self.shared_dict["total_requests"] = self.total_requests
+        self.shared_dict["status_counts"] = self.status_counts
+        self.shared_dict["ip_counts"] = self.ip_counts
+        self.shared_dict["url_counts"] = self.url_counts
+
+        logging.info("💾 Aggregator saved final metrics to shared dict.")
 
     

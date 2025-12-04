@@ -10,7 +10,9 @@ def test_aggregator_merges_metrics():
     worker_count = 2
 
     ## metrics-aggreator process instances is created and it will start reading generated metrics from each worker
-    agg = MetricsAggregator(result_queue, worker_count)
+    manager = multiprocessing.Manager()
+    shared_dict = manager.dict()
+    agg = MetricsAggregator(result_queue, worker_count, shared_dict)
     agg.start()
 
     # Worker-1 metrics-result stored into result-queue
