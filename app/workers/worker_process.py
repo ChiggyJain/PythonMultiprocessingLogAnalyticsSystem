@@ -53,6 +53,7 @@ class WorkerProcess(Process):
             batch = self.task_queue.get()
             if batch is None:
                 logging.info(f"🛑 Worker-{self.worker_id} received stop signal.")
+                self.result_queue.put(None)
                 break
             # generating metrics of given respective batch and respective contains list of lines
             metrics = self.compute_metrics(batch)

@@ -83,24 +83,15 @@ def main() -> None:
     for w in workers:
         w.join()
     logging.info("👷 All workers finished.")
-
-    final_metrics = dict(shared_dict)
-    print(f"final_metrics: {final_metrics}")
-
-    """
-    final_metrics = dict(shared_dict)
-    logging.info("📈 FINAL METRICS OUTPUT:")
     agg.join()
     logging.info("📊 Aggregator finished merging metrics.")
-    
-    # Print final metrics
-    print(f"final_metrics")
-    #final_metrics = dict(shared_dict)    
-    #logging.info("📈 FINAL METRICS OUTPUT:")
-    #logging.info(final_metrics)
-    #logging.info("✅ System completed successfully.")
-    """
 
+    # showing final metrics
+    final_metrics = dict(shared_dict)
+    logging.info("📈 FINAL METRICS OUTPUT:")
+    logging.info(final_metrics)
+    
+    logging.info("✅ System completed successfully.")
 
     # Collect outputs and reading data from queue until is not empty
     """
