@@ -45,6 +45,7 @@ def print_environment_summary() -> None:
 
 
 def main() -> None:
+
     setup_logging()
     ensure_directories()
     print_environment_summary()
@@ -54,28 +55,52 @@ def main() -> None:
     # it can be available/share in multiple process
     task_queue = Queue()
     result_queue = Queue()
+
+    # Start Loader
     loader = LogLoader(task_queue)
     loader.start()
-    loader.join()
+    logging.info("📥 Loader started.")
 
-    worker1 = WorkerProcess(task_queue, result_queue, worker_id=1)
-    worker1.start()
-
-    worker2 = WorkerProcess(task_queue, result_queue, worker_id=2)
-    worker2.start()
-
-    worker1.join()
-    worker2.join()
+    # Start Worker Processes
+    WORKER_COUNT = 2
+    workers = []
+    for i in range(WORKER_COUNT):
+        w = WorkerProcess(task_queue, result_queue, worker_id=i + 1)
+        w.start()
+        workers.append(w)
+    logging.info(f"👷 Started {WORKER_COUNT} worker processes.")
 
     ## metrics-aggreator process instances is created and it will start reading generated metrics from each worker
     manager = multiprocessing.Manager()
     shared_dict = manager.dict()
-    agg = MetricsAggregator(result_queue=result_queue, worker_count=2, shared_dict=shared_dict)
+    agg = MetricsAggregator(result_queue=result_queue, worker_count=WORKER_COUNT, shared_dict=shared_dict)
     agg.start()
-    agg.join()
+    logging.info("📊 Aggregator started.")
 
-    final = agg.get_final_metrics()
-    print(f"final-metrics: {final}\n")
+    # Wait for loader + workers + aggregator
+    loader.join()
+    logging.info("📥 Loader finished.")
+    for w in workers:
+        w.join()
+    logging.info("👷 All workers finished.")
+
+    final_metrics = dict(shared_dict)
+    print(f"final_metrics: {final_metrics}")
+
+    """
+    final_metrics = dict(shared_dict)
+    logging.info("📈 FINAL METRICS OUTPUT:")
+    agg.join()
+    logging.info("📊 Aggregator finished merging metrics.")
+    
+    # Print final metrics
+    print(f"final_metrics")
+    #final_metrics = dict(shared_dict)    
+    #logging.info("📈 FINAL METRICS OUTPUT:")
+    #logging.info(final_metrics)
+    #logging.info("✅ System completed successfully.")
+    """
+
 
     # Collect outputs and reading data from queue until is not empty
     """
