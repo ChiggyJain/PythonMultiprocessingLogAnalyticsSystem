@@ -46,9 +46,11 @@ class LogLoader(Process):
         logging.info(f"📥 Loader started. Reading logs from: {LOG_FILE_PATH}")
         # reading each batch and sending into task queue
         for batch in self.read_in_batches(BATCH_SIZE):
+            # queue [multiprocessing.Queue()] because this type of queue is applicable only in multiprocessing concept
+            # it can be available/share in multiple process
             self.task_queue.put(batch)
             logging.info(f"📦 Loader pushed batch of size: {len(batch)}")
-        # Send STOP signals to all worker processes
+        # Send STOP signals to all as per given worker-count processes
         for _ in range(WORKER_COUNT):
             self.task_queue.put(None)
         logging.info("🛑 Loader finished sending all batches & stop signals.")
