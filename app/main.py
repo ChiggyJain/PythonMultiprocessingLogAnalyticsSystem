@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import multiprocessing
 from multiprocessing import Queue
 from .config import (
     BASE_DIR,
@@ -13,7 +14,7 @@ from .config import (
 )
 from app.loader.log_loader import LogLoader
 from app.workers.worker_process import WorkerProcess
-
+from app.aggregator.metrics_aggregator import MetricsAggregator
 
 
 def setup_logging() -> None:
@@ -59,7 +60,22 @@ def main() -> None:
 
     worker1 = WorkerProcess(task_queue, result_queue, worker_id=1)
     worker1.start()
+
+    worker2 = WorkerProcess(task_queue, result_queue, worker_id=2)
+    worker2.start()
+
     worker1.join()
+    worker2.join()
+
+    ## metrics-aggreator process instances is created and it will start reading generated metrics from each worker
+    manager = multiprocessing.Manager()
+    shared_dict = manager.dict()
+    agg = MetricsAggregator(result_queue=result_queue, worker_count=2, shared_dict=shared_dict)
+    agg.start()
+    agg.join()
+
+    final = agg.get_final_metrics()
+    print(f"final-metrics: {final}\n")
 
     # Collect outputs and reading data from queue until is not empty
     """
