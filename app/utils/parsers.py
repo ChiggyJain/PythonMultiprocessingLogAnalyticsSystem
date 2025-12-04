@@ -22,7 +22,7 @@ def parse_log_line(line: str) -> Optional[LogEntry]:
     Returns LogEntry or None if the line is malformed.
     """
     match = LOG_PATTERN.match(line)
-    print(f"match: {match}\n")
+    # print(f"match: {match}\n")
     if not match:
         return None
     data = match.groupdict()
